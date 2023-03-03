@@ -57,14 +57,6 @@ Lexim charges a set fee rate for all on-chain transfers of Lexim-issued ERC20 in
 The fee controller has the ability to set the fee accumulator and the fee rate (measured in 1/100th of a basis point).
 Lexim will never change the fee rate without prior notice as we take transparency very seriously.
 
-#### Fee Rounding
-The `transfer` function takes the debit amount as input, and computes the fee and credit to the recipient as
-```
-fee = debit.mul(feeRate).div(feeParts)
-credit = debit.sub(fee)
-```
-Note that div truncates to an integer (and therefore 18 decimal effective precision).
-
 ### Asset Controller Role
 
 As required by our regulators, we have introduced a role for asset protection to freeze or seize the assets of a criminal party when required to do so by law, including by court order or other legal process.
