@@ -1,0 +1,11 @@
+cache
+artifacts
+docgen
+typechain-types
+
+node_modules
+.env
+
+#solidity-coverage files
+coverage
+coverage.json
