@@ -30,7 +30,9 @@ contract KrypzToken is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permi
     /// @dev Name of the token when deployed
     string public originalName;
 
-    mapping(address => bool) internal _frozen;    
+    mapping(address => bool) internal _frozen;
+    mapping(address => bool) internal _notpaying;    
+
 
     /// @dev Current fee rate
     uint256 public feeRate;
@@ -206,6 +208,33 @@ contract KrypzToken is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permi
     }
 
      /**
+     * @dev Adds an address to the list of nonpaying addresses
+     * @param addr The address to add.
+     */
+    function addNotPaying(address addr) public onlyRole(FEE_ROLE) {
+        require(!_notpaying[addr], "address already notpaying");
+        _notpaying[addr] = true;
+    }
+
+    /**
+     * @dev Removes an address from notpaying.
+     * @param addr The  address to remove.
+     */
+    function removeNotPaying(address addr) public onlyRole(FEE_ROLE) {
+        require(_notpaying[addr], "address is not notpaying");
+        _notpaying[addr] = false;
+    }
+
+    /**
+    * @dev Gets whether the address is currently notpaying.
+    * @param addr The address to check if notpaying.
+    * @return A bool representing whether the given address is notpaying.
+    */
+    function isNotPaying(address addr) public view returns (bool) {
+        return _notpaying[addr];
+    }
+
+     /**
      * Pause the contract preventing transfers
      */
     function pause() public onlyRole(PAUSER_ROLE) {
@@ -267,8 +296,10 @@ contract KrypzToken is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permi
      * - `sender` must have a balance of at least `amount`.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal virtual override {    
-        uint256 feeAmount = getFeeFor(amount);
-       
+        uint256 feeAmount = 0;
+        if (!_notpaying[sender] && !_notpaying[recipient]) {
+            feeAmount = getFeeFor(amount);
+        }
         uint256 newAmount = amount - feeAmount;
         if (feeAmount>0){
             emit FeeCollected(sender, feeAccumulator, feeAmount);
