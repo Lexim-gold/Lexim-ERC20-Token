@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: Copyright all rights reserved.
 pragma solidity ^0.8.12;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-ERC20PermitUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
 
 /// @title A ERC20 token 
 /// @dev Supports transfer fees
-contract KrypzToken is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permit {
+contract KrypzToken is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable,
+ PausableUpgradeable, AccessControlUpgradeable, ERC20PermitUpgradeable, UUPSUpgradeable {
     
     /// @dev Constant for the pauser role
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
@@ -19,6 +23,9 @@ contract KrypzToken is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permi
     bytes32 public constant CONTROLLER_ROLE = keccak256("CONTROLLER_ROLE");
     /// @dev Constant for the fee controller role
     bytes32 public constant FEE_ROLE = keccak256("FEE_ROLE");
+
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+
 
     // Token name
     string private _changeableName;
@@ -39,6 +46,9 @@ contract KrypzToken is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permi
     /// @dev Address where fees get sent
     address public feeAccumulator;
 
+
+    /// @dev Fee rate denominator
+    uint256 public feeParts;
     /// @dev Stuct to support dynamic list of goldbar ids
     struct Set {
         string[] values;
@@ -47,8 +57,7 @@ contract KrypzToken is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permi
 
     Set internal _goldBars; 
     
-    /// @dev Fee rate denominator
-    uint256 public constant feeParts = 1000000;
+
     /**
      * @dev Emitted when `addr` has been frozen
      */
@@ -90,20 +99,30 @@ contract KrypzToken is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permi
     event GoldBarIdRemoved(
         string indexed goldBarId
     );
+/// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
 
 
-
-    constructor(string memory initialName, string memory initialSymbol) ERC20(initialName, initialSymbol)
-     ERC20Permit(initialName) {
+    function  initialize(string memory initialName, string memory initialSymbol) initializer public {
+        __ERC20_init(initialName, initialSymbol);
+        __ERC20Burnable_init();
+        __Pausable_init();
+        __AccessControl_init();
+        __ERC20Permit_init(initialName);
+        __UUPSUpgradeable_init();
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
         _grantRole(CONTROLLER_ROLE, msg.sender);
         _grantRole(FEE_ROLE, msg.sender);
+        _grantRole(UPGRADER_ROLE, msg.sender);
         _changeableName = initialName;
         _changeableSymbol = initialSymbol;
         originalName = initialName;
         feeRate = 0;
+        feeParts = 1000000;
         feeAccumulator = msg.sender;
     }
     /**
@@ -319,5 +338,11 @@ contract KrypzToken is ERC20, ERC20Burnable, Pausable, AccessControl, ERC20Permi
         }
         return value*feeRate/feeParts;
     }
+
+    function _authorizeUpgrade(address newImplementation)
+    internal
+    onlyRole(UPGRADER_ROLE)
+    override
+    {}
     
 }

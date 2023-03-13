@@ -69,7 +69,6 @@ Freezing is something that Lexim will not do on its own accord, and as such we e
 
 In order to allow for gas-less transactions we have implemented support for EIP-2612 based on https://docs.openzeppelin.com/contracts/4.x/api/token/erc20#ERC20Permit.
 
-### Upgradeability
-
-We believe that smart contract should not be changeable on the whim of anyone including the developers. Consequently our ERC20 smart contract is NOT upgradable.
+### Upgradeability Proxy
+To facilitate upgradeability on the immutable blockchain we follow a ERC-1822: Universal Upgradeable Proxy Standard based on OpenZeppelin implemetation.
 
