@@ -12,7 +12,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /// @title A ERC20 token 
 /// @dev Supports transfer fees
-contract KrypzToken is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable,
+contract DauToken is  ERC20BurnableUpgradeable,
  PausableUpgradeable, AccessControlUpgradeable, ERC20PermitUpgradeable, UUPSUpgradeable {
     
     /// @dev Constant for the pauser role
@@ -105,7 +105,7 @@ contract KrypzToken is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable
     }
 
 
-    function  initialize(string memory initialName, string memory initialSymbol) initializer public {
+    function  initialize(string memory initialName, string memory initialSymbol) public initializer  {
         __ERC20_init(initialName, initialSymbol);
         __ERC20Burnable_init();
         __Pausable_init();
@@ -126,14 +126,14 @@ contract KrypzToken is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable
         feeAccumulator = msg.sender;
     }
     /**
-     * @dev See {IERC721Metadata-name}.
+     * @dev returns the changeable name.
      */
     function name() public view  override returns (string memory) {
         return _changeableName;
     }
 
     /**
-     * @dev See {IERC721Metadata-symbol}.
+     * @dev returns the changeable symbol.
      */
     function symbol() public view  override returns (string memory) {
         return _changeableSymbol;
@@ -165,6 +165,7 @@ contract KrypzToken is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable
         _goldBars.values[pos-1] = _goldBars.values[_goldBars.values.length-1];
         _goldBars.values.pop();
         _goldBars.isIn[lastVal] = pos;
+        _goldBars.isIn[goldBarId] = 0;
         emit GoldBarIdRemoved(goldBarId);
     }
 
@@ -275,6 +276,7 @@ contract KrypzToken is Initializable, ERC20Upgradeable, ERC20BurnableUpgradeable
         internal
         whenNotPaused
         override
+        virtual
     {
         super._beforeTokenTransfer(from, to, amount);
         require(!_frozen[to] && !_frozen[from], "address frozen");
